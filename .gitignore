@@ -10,3 +10,8 @@
 *.lai
 *.la
 *.a
+
+# binaries
+spanning_tree
+lasso
+mpi_test

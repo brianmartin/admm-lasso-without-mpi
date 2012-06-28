@@ -1,0 +1,14 @@
+#!/bin/bash
+# A simplest-possible example of parallel code at work on a single machine.
+
+killall spanning_tree
+
+./spanning_tree
+
+for i in `gseq 1 3`
+do
+	./lasso $i 4 &
+done
+
+./lasso 0 4 
+killall spanning_tree
