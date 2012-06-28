@@ -26,11 +26,11 @@ void MPI_Allreduce(double* send, double* recv, int size, int mpi_type, int mpi_o
 	std::string master_location = "localhost";
 
 	//copy to float array
-	float* buffer = (float*) malloc(size * sizeof(float));
 	int i;
-	for (i = 0; i < size; i++) {
-		buffer[i] = (float) send[i];
-	}
+	int sendBytes = size * sizeof(double);
+
+	double* buffer = (double*) malloc(sendBytes);
+	memcpy(buffer, send, sendBytes);
 
 	// call the VW all_reduce
     all_reduce(buffer, size, master_location, unique_id, total, rank);
@@ -39,6 +39,8 @@ void MPI_Allreduce(double* send, double* recv, int size, int mpi_type, int mpi_o
 	for (i = 0; i < size; i++) {
 		recv[i] = (double) buffer[i];
 	}
+
+	free((void*) buffer);
 
     return;
 }

@@ -40,14 +40,14 @@ string current_master="";
 
 node_socks socks;
 
-float add(float* arr, int n) {
-  float sum = 0.0;
+double add(double* arr, int n) {
+  double sum = 0.0;
   for(int i = 0;i < n;i++)
     sum += arr[i];
   return sum;
 }
 
-void printfloat(float* arr, int n) {
+void printdouble(double* arr, int n) {
   for(int i = 0;i < n;i++)
     cout<<arr[i]<<" ";
   cout<<endl;
@@ -213,13 +213,13 @@ void all_reduce_init(string master_location, size_t unique_id, size_t total, siz
     close(sock);
 }
 
-void addbufs(float* buf1, float* buf2, int n) {
+void addbufs(double* buf1, double* buf2, int n) {
   for(int i = 0;i < n;i++) 
 //     {
 //       uint32_t first = *((uint32_t*)(buf1+i));
 //       uint32_t second = *((uint32_t*)(buf2+i));
 //       uint32_t xkindaor = first^second;
-//       buf1[i] = *(float*)(&xkindaor);
+//       buf1[i] = *(double*)(&xkindaor);
 //     }
     buf1[i] += buf2[i];
 }
@@ -228,8 +228,8 @@ void addbufs(float* buf1, float* buf2, int n) {
 void pass_up(char* buffer, int left_read_pos, int right_read_pos, int& parent_sent_pos, int parent_sock, int n) {
   
   //cerr<<left_read_pos<<" "<<right_read_pos<<" "<<parent_sent_pos<<" "<<n<<endl;
-  int my_bufsize = min(buf_size, ((int)(floor(left_read_pos/(sizeof(float)))*sizeof(float)) - parent_sent_pos));
-  my_bufsize = min(my_bufsize, ((int)(floor(right_read_pos/(sizeof(float)))*sizeof(float)) - parent_sent_pos));
+  int my_bufsize = min(buf_size, ((int)(floor(left_read_pos/(sizeof(double)))*sizeof(double)) - parent_sent_pos));
+  my_bufsize = min(my_bufsize, ((int)(floor(right_read_pos/(sizeof(double)))*sizeof(double)) - parent_sent_pos));
 
   if(my_bufsize > 0) {
     //going to pass up this chunk of data to the parent
@@ -269,10 +269,10 @@ void reduce(char* buffer, int n, int parent_sock, int* child_sockets) {
     FD_SET(child_sockets[1],&fds);
 
   int max_fd = max(child_sockets[0],child_sockets[1])+1;
-  int child_read_pos[2] = {0,0}; //First unread float from left and right children
+  int child_read_pos[2] = {0,0}; //First unread double from left and right children
   int child_unprocessed[2] = {0,0}; //The number of bytes sent by the child but not yet added to the buffer
-  char child_read_buf[2][buf_size+sizeof(float)-1];
-  int parent_sent_pos = 0; //First unsent float to parent
+  char child_read_buf[2][buf_size+sizeof(double)-1];
+  int parent_sent_pos = 0; //First unsent double to parent
   //parent_sent_pos <= left_read_pos
   //parent_sent_pos <= right_read_pos
   
@@ -310,7 +310,7 @@ void reduce(char* buffer, int n, int parent_sock, int* child_sockets) {
 	    }
 	  
 	
-	    //float read_buf[buf_size];
+	    //double read_buf[buf_size];
 	    size_t count = min(buf_size,n - child_read_pos[i]);
 	    int read_size = read(child_sockets[i], child_read_buf[i] + child_unprocessed[i], count);
 	    if(read_size == -1) {
@@ -321,23 +321,23 @@ void reduce(char* buffer, int n, int parent_sock, int* child_sockets) {
 	    
 	    //cout<<"Read "<<read_size<<" bytes\n";
 // 	    char pattern[4] = {'A','B','C','D'};
-// 	    for(int j = 0; j < (child_read_pos[i] + read_size)/sizeof(float) - child_read_pos[i]/sizeof(float);j++) {
-// 	      if((buffer[(child_read_pos[i]/sizeof(float))*sizeof(float)+j] != pattern[j%4] && buffer[(child_read_pos[i]/sizeof(float))*sizeof(float)+j] != '\0') || (child_read_buf[i][j] != pattern[j%4]&& child_read_buf[i][j] != '\0')) {
-// 		cerr<<"Wrong data "<<pattern[j%4]<<" "<<buffer[(child_read_pos[i]/sizeof(float))*sizeof(float)+j]<<" "<<child_read_buf[i][j]<<endl;
-// 		cerr<<"Reading from positions "<<child_read_pos[i]/sizeof(float)+j<<" "<<j<<" "<<child_unprocessed[i]<<" "<<child_read_pos[i]<<endl;
+// 	    for(int j = 0; j < (child_read_pos[i] + read_size)/sizeof(double) - child_read_pos[i]/sizeof(double);j++) {
+// 	      if((buffer[(child_read_pos[i]/sizeof(double))*sizeof(double)+j] != pattern[j%4] && buffer[(child_read_pos[i]/sizeof(double))*sizeof(double)+j] != '\0') || (child_read_buf[i][j] != pattern[j%4]&& child_read_buf[i][j] != '\0')) {
+// 		cerr<<"Wrong data "<<pattern[j%4]<<" "<<buffer[(child_read_pos[i]/sizeof(double))*sizeof(double)+j]<<" "<<child_read_buf[i][j]<<endl;
+// 		cerr<<"Reading from positions "<<child_read_pos[i]/sizeof(double)+j<<" "<<j<<" "<<child_unprocessed[i]<<" "<<child_read_pos[i]<<endl;
 // 		cerr<<"Reading from child "<<i<<" "<<child_read_pos[0]<<" "<<child_read_pos[1]<<endl;
 // 	      }
 // 	    }
 
-	    addbufs((float*)buffer + child_read_pos[i]/sizeof(float), (float*)child_read_buf[i], (child_read_pos[i] + read_size)/sizeof(float) - child_read_pos[i]/sizeof(float));
+	    addbufs((double*)buffer + child_read_pos[i]/sizeof(double), (double*)child_read_buf[i], (child_read_pos[i] + read_size)/sizeof(double) - child_read_pos[i]/sizeof(double));
 	    
 	    child_read_pos[i] += read_size;
 	    int old_unprocessed = child_unprocessed[i];
-	    child_unprocessed[i] = child_read_pos[i] % (int)sizeof(float);
-	    //cout<<"Unprocessed "<<child_unprocessed[i]<<" "<<(old_unprocessed + read_size)%(int)sizeof(float)<<" ";
+	    child_unprocessed[i] = child_read_pos[i] % (int)sizeof(double);
+	    //cout<<"Unprocessed "<<child_unprocessed[i]<<" "<<(old_unprocessed + read_size)%(int)sizeof(double)<<" ";
 	    for(int j = 0;j < child_unprocessed[i];j++) {
-	      // cout<<(child_read_pos[i]/(int)sizeof(float))*(int)sizeof(float)+j<<" ";
-	      child_read_buf[i][j] = child_read_buf[i][((old_unprocessed + read_size)/(int)sizeof(float))*sizeof(float)+j];
+	      // cout<<(child_read_pos[i]/(int)sizeof(double))*(int)sizeof(double)+j<<" ";
+	      child_read_buf[i][j] = child_read_buf[i][((old_unprocessed + read_size)/(int)sizeof(double))*sizeof(double)+j];
 	    }
 	    //cout<<endl;
 	  
@@ -361,8 +361,8 @@ void reduce(char* buffer, int n, int parent_sock, int* child_sockets) {
 void broadcast(char* buffer, int n, int parent_sock, int* child_sockets) {
 
  
-   int parent_read_pos = 0; //First unread float from parent
-   int children_sent_pos = 0; //First unsent float to children
+   int parent_read_pos = 0; //First unread double from parent
+   int children_sent_pos = 0; //First unsent double to children
   //parent_sent_pos <= left_read_pos
   //parent_sent_pos <= right_read_pos
   
@@ -394,13 +394,13 @@ void broadcast(char* buffer, int n, int parent_sock, int* child_sockets) {
     }
 }
 
-void all_reduce(float* buffer, int n, string master_location, size_t unique_id, size_t total, size_t node) 
+void all_reduce(double* buffer, int n, string master_location, size_t unique_id, size_t total, size_t node)
 {
   if(master_location != current_master) 
     all_reduce_init(master_location, unique_id, total, node);
     
-  reduce((char*)buffer, n*sizeof(float), socks.parent, socks.children);
-  broadcast((char*)buffer, n*sizeof(float), socks.parent, socks.children);
+  reduce((char*)buffer, n*sizeof(double), socks.parent, socks.children);
+  broadcast((char*)buffer, n*sizeof(double), socks.parent, socks.children);
 }
 
 node_socks::~node_socks()
