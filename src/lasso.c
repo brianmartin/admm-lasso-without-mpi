@@ -7,6 +7,13 @@
  * and the GNU Scientific Library (GSL) for math.
  */
 
+/*
+ * Obtained from: http://www.stanford.edu/~boyd/papers/admm/mpi/
+ *
+ * As far as I can tell, there is no copyright or license prohibiting
+ * distribution of this code.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

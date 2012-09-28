@@ -2,6 +2,12 @@
 #include "allreduce.h"
 #include <iostream>
 
+/*
+ * MPI interface shim.
+ *
+ * Author: Brian Martin
+ */
+
 using namespace std;
 
 size_t unique_id = 0;
