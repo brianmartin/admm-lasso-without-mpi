@@ -1,4 +1,2 @@
-yarn-lasso
-==========
-
-Boyd&#39;s ADMM Lasso solver on YARN
+Stephen Boyd's ADMM distributed lasso solver with no dependence on MPI (via
+Vowpal Wabbit's allreduce).
